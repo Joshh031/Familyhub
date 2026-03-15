@@ -361,6 +361,10 @@ textarea.fi{resize:vertical;min-height:66px;line-height:1.5}
         <button class="btn btn-mic" id="micBtn" onclick="startDictation()" title="Add event by voice">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"/><path d="M5 10a7 7 0 0014 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
+        <button class="btn btn-mic" id="camBtn" onclick="openPhotoImport()" title="Import events from photo">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(event)">
         <button class="btn btn-blue" onclick="openAdd()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
           Add Event
@@ -623,6 +627,60 @@ textarea.fi{resize:vertical;min-height:66px;line-height:1.5}
         <div class="ur"><div class="ud" style="background:var(--green)"></div>Josh — active now</div>
         <div class="ur"><div class="ud" style="background:#a78bfa"></div>Jess — last seen 2h ago</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO IMPORT MODAL -->
+<div class="ov" id="photoOv">
+  <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto">
+    <div class="mhd">
+      <span class="mtitle">📸 Photo Import</span>
+      <button class="mclose" onclick="closeOv('photoOv')">✕</button>
+    </div>
+    <div class="mbd">
+
+      <!-- Step 1: Upload -->
+      <div id="photoStep1">
+        <div id="photoDropZone" onclick="document.getElementById('photoInput').click()"
+          style="border:2px dashed var(--border2);border-radius:var(--rm);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:4px"
+          ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
+          ondragleave="this.style.borderColor='var(--border2)'"
+          ondrop="handlePhotoDrop(event)">
+          <div style="font-size:32px;margin-bottom:10px">📸</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Tap to take a photo or upload</div>
+          <div style="font-size:12px;color:var(--muted)">Works great with chalkboards, whiteboards, or any schedule photo</div>
+        </div>
+        <div id="photoPreviewWrap" style="display:none;margin-top:12px">
+          <img id="photoPreviewImg" style="width:100%;border-radius:var(--rm);border:1px solid var(--border);max-height:300px;object-fit:contain">
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('photoInput').click()">Change photo</button>
+            <button class="btn btn-blue" style="flex:1" id="photoProcessBtn" onclick="processPhoto()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:6px"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Read Schedule →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Processing -->
+      <div id="photoStep2" style="display:none;text-align:center;padding:40px 20px">
+        <div style="width:48px;height:48px;border:3px solid var(--blue-dim);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px"></div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Reading your schedule…</div>
+        <div style="font-size:12px;color:var(--muted)">AI is scanning the photo for events</div>
+      </div>
+
+      <!-- Step 3: Review events -->
+      <div id="photoStep3" style="display:none">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:12px">Found <span id="photoEvtCount">0</span> events — review before saving:</div>
+        <div id="photoEvtList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+        <div id="photoErr" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);padding:10px 12px;font-size:13px;color:#f87171;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="flex:1" onclick="retryPhoto()">📸 Try again</button>
+          <button class="btn btn-blue" style="flex:1" id="photoSaveAllBtn" onclick="saveAllPhotoEvts()">Save all events ✓</button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1426,6 +1484,161 @@ function toggleTodo(id){
 
 function delTodo(id){todos=todos.filter(x=>x.id!==id);fbSet('todos',todos);renderTodo();}
 function clearTodoDone(){todos=todos.filter(x=>!x.done);fbSet('todos',todos);renderTodo();toast('✓','Cleared completed tasks');}
+
+// ═══════════════════════════════════════════════
+// PHOTO IMPORT
+// ═══════════════════════════════════════════════
+let photoBase64=null, photoEvts=[];
+
+function openPhotoImport(){
+  photoBase64=null; photoEvts=[];
+  document.getElementById('photoStep1').style.display='';
+  document.getElementById('photoStep2').style.display='none';
+  document.getElementById('photoStep3').style.display='none';
+  document.getElementById('photoPreviewWrap').style.display='none';
+  openOv('photoOv');
+  // trigger file picker on mobile immediately
+  document.getElementById('photoInput').click();
+}
+
+function handlePhotoSelected(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  loadPhotoFile(file);
+}
+
+function handlePhotoDrop(e){
+  e.preventDefault();
+  document.getElementById('photoDropZone').style.borderColor='var(--border2)';
+  const file=e.dataTransfer.files[0];
+  if(!file||!file.type.startsWith('image/'))return;
+  loadPhotoFile(file);
+}
+
+function loadPhotoFile(file){
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    photoBase64=ev.target.result.split(',')[1];
+    document.getElementById('photoPreviewImg').src=ev.target.result;
+    document.getElementById('photoPreviewWrap').style.display='';
+    document.getElementById('photoDropZone').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function retryPhoto(){
+  document.getElementById('photoStep1').style.display='';
+  document.getElementById('photoStep2').style.display='none';
+  document.getElementById('photoStep3').style.display='none';
+  document.getElementById('photoDropZone').style.display='';
+  document.getElementById('photoPreviewWrap').style.display='none';
+  photoBase64=null;
+}
+
+async function processPhoto(){
+  if(!photoBase64){toast('⚠️','No photo selected');return;}
+  document.getElementById('photoStep1').style.display='none';
+  document.getElementById('photoStep2').style.display='';
+
+  const todayStr=new Date().toISOString().split('T')[0];
+  const prompt=`You are a family calendar assistant. Look at this schedule photo carefully and extract ALL events you can see.
+Today's date is ${todayStr}.
+
+Return ONLY a JSON array (no markdown, no explanation) where each item has:
+{
+  "title": "descriptive event title",
+  "date": "YYYY-MM-DD",
+  "time": "H:MM AM/PM or empty string",
+  "timeEnd": "H:MM AM/PM end time if visible or empty string",
+  "type": "one of: soccer, basketball, baseball, enrichment, birthday, equip, speech, travel, dinner, conference, school-break, knicks, social, wcfc",
+  "who": "Maddie, Max, Josh, Jess, Both kids, Both adults, Everyone, or empty string",
+  "location": "location if visible or empty string",
+  "notes": "any extra details or empty string"
+}
+
+Rules:
+- Extract every event you see — don't skip any
+- Infer types from context (bball/basketball=basketball, soccer=soccer, speech=speech, enrichment=enrichment, etc.)
+- Convert day names to actual dates based on the week shown in the photo
+- If a week header like "Week of March 16-22" is visible use those dates
+- Infer who from names mentioned (Maddie, Max, Josh, Jess)
+- Times like "330" mean 3:30 PM, "6PM" means 6:00 PM
+- Return only the JSON array, nothing else`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:2000,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:photoBase64}},
+            {type:'text',text:prompt}
+          ]
+        }]
+      })
+    });
+    const data=await resp.json();
+    const raw=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(raw);
+    photoEvts=parsed;
+    showPhotoPreview(parsed);
+  }catch(err){
+    console.error('Photo parse error:',err);
+    document.getElementById('photoStep2').style.display='none';
+    document.getElementById('photoStep3').style.display='';
+    document.getElementById('photoErr').style.display='';
+    document.getElementById('photoErr').textContent='Could not read the photo. Try a clearer image or better lighting.';
+    document.getElementById('photoEvtList').innerHTML='';
+    document.getElementById('photoEvtCount').textContent='0';
+  }
+}
+
+function showPhotoPreview(evts){
+  document.getElementById('photoStep2').style.display='none';
+  document.getElementById('photoStep3').style.display='';
+  document.getElementById('photoErr').style.display='none';
+  document.getElementById('photoEvtCount').textContent=evts.length;
+
+  const list=document.getElementById('photoEvtList');
+  list.innerHTML='';
+  evts.forEach((e,i)=>{
+    const t=ti(e.type);
+    const d=e.date?new Date(e.date+'T12:00:00'):null;
+    const dl=d?`${DS[d.getDay()]} ${MO[d.getMonth()].slice(0,3)} ${d.getDate()}`:'?';
+    const timeStr=e.time?(e.timeEnd?`${e.time} – ${e.timeEnd}`:e.time):'';
+    list.innerHTML+=`
+      <div id="photoEvt_${i}" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rm);padding:10px 12px;display:flex;align-items:center;gap:10px">
+        <input type="checkbox" checked id="photoChk_${i}" style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0">
+        <div style="width:28px;height:28px;background:${t.bg};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${t.e}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${dl}${timeStr?' · '+timeStr:''}${e.who?' · '+e.who:''}${e.location?' · '+e.location:''}</div>
+        </div>
+      </div>`;
+  });
+}
+
+function saveAllPhotoEvts(){
+  const toSave=photoEvts.filter((_,i)=>document.getElementById('photoChk_'+i)?.checked);
+  if(!toSave.length){toast('⚠️','No events selected');return;}
+  toSave.forEach(e=>{
+    evts.push({id:nid++,...e});
+  });
+  fbSet('events',evts);
+  closeOv('photoOv');
+  render();
+  toast('📸',`${toSave.length} event${toSave.length>1?'s':''} added!`);
+  // jump to first event's month
+  if(toSave[0]?.date){
+    const d=new Date(toSave[0].date+'T12:00:00');
+    cur=new Date(d.getFullYear(),d.getMonth(),1);
+    render();
+  }
+}
 
 // ═══════════════════════════════════════════════
 // VOICE DICTATION
