@@ -620,7 +620,12 @@ textarea.fi{resize:vertical;min-height:66px;line-height:1.5}
         <div class="sur"><input class="su" value="https://joshh031.github.io/Family-Calendar" readonly><button class="btn btn-blue" style="font-size:12px;padding:6px 12px" onclick="cpLink()">Copy</button></div>
       </div>
       <div class="sc">
-        <div class="sct">🗑 Clear Future Events</div>
+        <div class="sct">🔑 Anthropic API Key</div>
+        <div class="scs">Required for photo import and voice AI. Stored locally on this device only.</div>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px" onclick="promptForApiKey()">
+          <span id="apiKeyStatus"></span>
+        </button>
+      </div>
         <div class="scs">Delete all events after today in one tap. Your events this week stay.</div>
         <button class="btn btn-del" style="width:100%;justify-content:center" onclick="clearFutureEvts()">Clear all future events</button>
       </div>
@@ -1102,7 +1107,13 @@ function rWeek(){
 // ═══════════════════════════════════════════════
 // OVERLAYS
 // ═══════════════════════════════════════════════
-function openOv(id){document.getElementById(id).classList.add('open');}
+function openOv(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='setOv'){
+    const el=document.getElementById('apiKeyStatus');
+    if(el) el.textContent=getApiKey()?'✓ Key saved — tap to update':'⚠ No key — tap to add';
+  }
+}
 function closeOv(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.ov').forEach(el=>el.addEventListener('click',function(e){if(e.target===this)closeOv(this.id);}));
 
@@ -1535,8 +1546,21 @@ function retryPhoto(){
   photoBase64=null;
 }
 
+function getApiKey(){return localStorage.getItem('fh_apikey')||'';}
+function saveApiKey(k){localStorage.setItem('fh_apikey',k.trim());}
+
+function promptForApiKey(cb){
+  const existing=getApiKey();
+  const key=prompt(existing?'Update your Anthropic API key (leave blank to keep current):':'Enter your Anthropic API key to enable AI features:\n\nGet one at console.anthropic.com → API Keys',existing||'');
+  if(key===null)return; // cancelled
+  if(key.trim()){saveApiKey(key);toast('🔑','API key saved!');}
+  if(cb&&getApiKey())cb();
+}
+
 async function processPhoto(){
   if(!photoBase64){toast('⚠️','No photo selected');return;}
+  const apiKey=getApiKey();
+  if(!apiKey){promptForApiKey(()=>processPhoto());return;}
   document.getElementById('photoStep1').style.display='none';
   document.getElementById('photoStep2').style.display='';
 
@@ -1568,7 +1592,7 @@ Rules:
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
         max_tokens:2000,
@@ -1707,6 +1731,8 @@ function retryDictation(){
 
 async function processDictation(){
   if(!dictTranscriptText){toast('⚠️','Nothing heard yet');return;}
+  const apiKey=getApiKey();
+  if(!apiKey){promptForApiKey(()=>processDictation());return;}
   document.getElementById('dictProcessBtn').disabled=true;
   document.getElementById('dictProcessBtn').textContent='Parsing…';
 
@@ -1736,7 +1762,7 @@ Rules:
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
         max_tokens:500,
