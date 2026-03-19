@@ -97,7 +97,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .seg{display:flex;background:var(--surface2);border-radius:var(--r);padding:2px;gap:1px;border:1px solid var(--border)}
 .seg-b{padding:4px 12px;border-radius:5px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s}
 .seg-b.on{background:var(--blue-dim);color:var(--blue-bright)}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;transition:all .12s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;transition:all .12s;white-space:nowrap}
 .btn-ghost{background:var(--surface2);color:var(--muted2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
 .btn-blue{background:var(--blue);color:#fff;box-shadow:0 0 16px var(--blue-glow)}
@@ -364,7 +364,8 @@ textarea.fi{resize:vertical;min-height:66px;line-height:1.5}
         <button class="btn btn-mic" id="camBtn" onclick="openPhotoImport()" title="Import events from photo">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.8"/></svg>
         </button>
-        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(event)">
+        <input type="file" id="photoInputCamera" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(event)">
+        <input type="file" id="photoInputGallery" accept="image/*" style="display:none" onchange="handlePhotoSelected(event)">
         <button class="btn btn-blue" onclick="openAdd()">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
           Add Event
@@ -647,19 +648,35 @@ textarea.fi{resize:vertical;min-height:66px;line-height:1.5}
 
       <!-- Step 1: Upload -->
       <div id="photoStep1">
-        <div id="photoDropZone" onclick="document.getElementById('photoInput').click()"
-          style="border:2px dashed var(--border2);border-radius:var(--rm);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:4px"
+        <!-- Three input buttons -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:72px;gap:4px;font-size:11px" onclick="triggerCamera()">
+            <span style="font-size:22px">📷</span>Take Photo
+          </button>
+          <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:72px;gap:4px;font-size:11px" onclick="triggerGallery()">
+            <span style="font-size:22px">🖼️</span>Camera Roll
+          </button>
+          <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:72px;gap:4px;font-size:11px" onclick="triggerPaste()">
+            <span style="font-size:22px">📋</span>Paste Screenshot
+          </button>
+        </div>
+        <!-- Drop zone -->
+        <div id="photoDropZone"
+          style="border:2px dashed var(--border2);border-radius:var(--rm);padding:20px;text-align:center;transition:all .2s;color:var(--muted);font-size:12px"
           ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
           ondragleave="this.style.borderColor='var(--border2)'"
           ondrop="handlePhotoDrop(event)">
-          <div style="font-size:32px;margin-bottom:10px">📸</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Tap to take a photo or upload</div>
-          <div style="font-size:12px;color:var(--muted)">Works great with chalkboards, whiteboards, or any schedule photo</div>
+          Or drag & drop an image here
+        </div>
+        <!-- Paste area (hidden textarea trick for mobile) -->
+        <div id="pasteHint" style="display:none;background:var(--surface2);border:1px solid var(--blue-dim);border-radius:var(--rm);padding:12px;text-align:center;font-size:13px;color:var(--muted2);margin-top:8px">
+          📋 Press <strong>Cmd+V</strong> (Mac) or <strong>Ctrl+V</strong> (Windows) to paste your screenshot<br>
+          <span style="font-size:11px;color:var(--muted)">On iPhone: long-press → Paste won't work in Safari — use Camera Roll instead</span>
         </div>
         <div id="photoPreviewWrap" style="display:none;margin-top:12px">
-          <img id="photoPreviewImg" style="width:100%;border-radius:var(--rm);border:1px solid var(--border);max-height:300px;object-fit:contain">
+          <img id="photoPreviewImg" style="width:100%;border-radius:var(--rm);border:1px solid var(--border);max-height:280px;object-fit:contain">
           <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('photoInput').click()">Change photo</button>
+            <button class="btn btn-ghost" style="flex:1" onclick="retryPhoto()">Change photo</button>
             <button class="btn btn-blue" style="flex:1" id="photoProcessBtn" onclick="processPhoto()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:6px"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Read Schedule →
@@ -845,28 +862,21 @@ function fbListen(path,cb){
 // ═══════════════════════════════════════════════
 function defaultEvts(){
   let id=1,a=[];
-  // Knicks schedule
-  [['2026-02-25','7:30 PM','Knicks @ Cavaliers'],
-   ['2026-02-28','8:00 PM','Knicks @ Bucks'],
-   ['2026-03-01','1:00 PM','Knicks vs Spurs'],
-   ['2026-03-04','7:30 PM','Knicks @ Raptors'],
-   ['2026-03-05','7:00 PM','Knicks vs Thunder'],
-   ['2026-03-08','3:30 PM','Knicks vs Celtics'],
-   ['2026-03-11','8:00 PM','Knicks @ Heat'],
-   ['2026-03-13','7:30 PM','Knicks vs Wizards'],
-   ['2026-03-15','6:00 PM','Knicks @ Nets'],
-   ['2026-03-18','7:30 PM','Knicks vs Lakers'],
-   ['2026-03-20','8:00 PM','Knicks @ Bulls'],
-   ['2026-03-22','7:30 PM','Knicks vs Pacers'],
-   ['2026-03-25','7:00 PM','Knicks @ 76ers'],
-   ['2026-03-27','7:30 PM','Knicks vs Hawks'],
-   ['2026-03-29','6:00 PM','Knicks @ Raptors'],
-   ['2026-04-01','7:30 PM','Knicks vs Nets'],
-   ['2026-04-03','7:00 PM','Knicks @ Magic'],
-   ['2026-04-05','3:30 PM','Knicks vs Heat'],
-   ['2026-04-08','7:30 PM','Knicks @ Cavaliers'],
-   ['2026-04-10','7:30 PM','Knicks vs Bucks'],
-   ['2026-04-12','1:00 PM','Knicks @ Celtics'],
+  // Knicks schedule — real remaining 2025-26 season games
+  [['2026-03-15','8:00 PM','Knicks vs Warriors'],
+   ['2026-03-17','7:30 PM','Knicks vs Pacers'],
+   ['2026-03-20','7:30 PM','Knicks @ Nets'],
+   ['2026-03-22','7:30 PM','Knicks vs Wizards'],
+   ['2026-03-24','7:30 PM','Knicks vs Pelicans'],
+   ['2026-03-26','7:00 PM','Knicks @ Hornets'],
+   ['2026-03-29','7:30 PM','Knicks @ Thunder'],
+   ['2026-03-31','8:00 PM','Knicks @ Rockets'],
+   ['2026-04-01','8:00 PM','Knicks @ Grizzlies'],
+   ['2026-04-03','7:30 PM','Knicks vs Bulls'],
+   ['2026-04-06','7:00 PM','Knicks @ Hawks'],
+   ['2026-04-09','7:30 PM','Knicks vs Celtics'],
+   ['2026-04-10','7:30 PM','Knicks vs Raptors'],
+   ['2026-04-12','6:00 PM','Knicks vs Hornets'],
   ].forEach(([d,t,n])=>a.push({id:id++,type:'knicks',title:n,date:d,time:t,who:'Josh'}));
   return a;
 }
@@ -1507,14 +1517,55 @@ function openPhotoImport(){
   document.getElementById('photoStep2').style.display='none';
   document.getElementById('photoStep3').style.display='none';
   document.getElementById('photoPreviewWrap').style.display='none';
+  document.getElementById('photoDropZone').style.display='';
+  document.getElementById('pasteHint').style.display='none';
   openOv('photoOv');
-  // trigger file picker on mobile immediately
-  document.getElementById('photoInput').click();
+}
+
+function triggerCamera(){document.getElementById('photoInputCamera').click();}
+function triggerGallery(){document.getElementById('photoInputGallery').click();}
+
+function triggerPaste(){
+  // Try clipboard API first (desktop Chrome/Edge)
+  if(navigator.clipboard&&navigator.clipboard.read){
+    navigator.clipboard.read().then(items=>{
+      for(const item of items){
+        const imgType=item.types.find(t=>t.startsWith('image/'));
+        if(imgType){
+          item.getType(imgType).then(blob=>loadPhotoFile(blob));
+          return;
+        }
+      }
+      // No image in clipboard — show hint
+      document.getElementById('pasteHint').style.display='';
+    }).catch(()=>{
+      document.getElementById('pasteHint').style.display='';
+    });
+  } else {
+    document.getElementById('pasteHint').style.display='';
+  }
+}
+
+// Global paste listener — catches Cmd+V / Ctrl+V anywhere in the modal
+function initPasteListener(){
+  document.addEventListener('paste',function(e){
+    if(!document.getElementById('photoOv').classList.contains('open'))return;
+    const items=e.clipboardData?.items;
+    if(!items)return;
+    for(const item of items){
+      if(item.type.startsWith('image/')){
+        const blob=item.getAsFile();
+        if(blob){loadPhotoFile(blob);return;}
+      }
+    }
+  });
 }
 
 function handlePhotoSelected(e){
   const file=e.target.files[0];
   if(!file)return;
+  // Reset input so same file can be re-selected
+  e.target.value='';
   loadPhotoFile(file);
 }
 
@@ -1533,6 +1584,7 @@ function loadPhotoFile(file){
     document.getElementById('photoPreviewImg').src=ev.target.result;
     document.getElementById('photoPreviewWrap').style.display='';
     document.getElementById('photoDropZone').style.display='none';
+    document.getElementById('pasteHint').style.display='none';
   };
   reader.readAsDataURL(file);
 }
@@ -1542,6 +1594,7 @@ function retryPhoto(){
   document.getElementById('photoStep2').style.display='none';
   document.getElementById('photoStep3').style.display='none';
   document.getElementById('photoDropZone').style.display='';
+  document.getElementById('pasteHint').style.display='none';
   document.getElementById('photoPreviewWrap').style.display='none';
   photoBase64=null;
 }
@@ -1959,6 +2012,7 @@ _s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
 document.head.appendChild(_s);
 
 // initFirebase() is called by the Firebase loader above once SDKs are ready
+initPasteListener();
 </script>
 </body>
 </html>
