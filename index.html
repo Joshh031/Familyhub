@@ -648,40 +648,59 @@ textarea.fi{resize:vertical;min-height:66px;line-height:1.5}
 
       <!-- Step 1: Upload -->
       <div id="photoStep1">
-        <!-- Three input buttons -->
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:72px;gap:4px;font-size:11px" onclick="triggerCamera()">
-            <span style="font-size:22px">📷</span>Take Photo
-          </button>
-          <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:72px;gap:4px;font-size:11px" onclick="triggerGallery()">
-            <span style="font-size:22px">🖼️</span>Camera Roll
-          </button>
-          <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:72px;gap:4px;font-size:11px" onclick="triggerPaste()">
-            <span style="font-size:22px">📋</span>Paste Screenshot
-          </button>
+        <!-- Tab switcher -->
+        <div style="display:flex;background:var(--surface2);border-radius:var(--r);padding:3px;margin-bottom:14px;gap:2px">
+          <button id="tabPhotoBtn" onclick="switchImportTab('photo')" style="flex:1;padding:7px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:var(--blue);color:white;transition:all .15s">📷 Photo</button>
+          <button id="tabTextBtn" onclick="switchImportTab('text')" style="flex:1;padding:7px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:transparent;color:var(--muted);transition:all .15s">✏️ Paste Text</button>
         </div>
-        <!-- Drop zone -->
-        <div id="photoDropZone"
-          style="border:2px dashed var(--border2);border-radius:var(--rm);padding:20px;text-align:center;transition:all .2s;color:var(--muted);font-size:12px"
-          ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
-          ondragleave="this.style.borderColor='var(--border2)'"
-          ondrop="handlePhotoDrop(event)">
-          Or drag & drop an image here
-        </div>
-        <!-- Paste area (hidden textarea trick for mobile) -->
-        <div id="pasteHint" style="display:none;background:var(--surface2);border:1px solid var(--blue-dim);border-radius:var(--rm);padding:12px;text-align:center;font-size:13px;color:var(--muted2);margin-top:8px">
-          📋 Press <strong>Cmd+V</strong> (Mac) or <strong>Ctrl+V</strong> (Windows) to paste your screenshot<br>
-          <span style="font-size:11px;color:var(--muted)">On iPhone: long-press → Paste won't work in Safari — use Camera Roll instead</span>
-        </div>
-        <div id="photoPreviewWrap" style="display:none;margin-top:12px">
-          <img id="photoPreviewImg" style="width:100%;border-radius:var(--rm);border:1px solid var(--border);max-height:280px;object-fit:contain">
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-ghost" style="flex:1" onclick="retryPhoto()">Change photo</button>
-            <button class="btn btn-blue" style="flex:1" id="photoProcessBtn" onclick="processPhoto()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:6px"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Read Schedule →
+
+        <!-- PHOTO TAB -->
+        <div id="importTabPhoto">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:64px;gap:3px;font-size:11px" onclick="triggerCamera()">
+              <span style="font-size:20px">📷</span>Take Photo
+            </button>
+            <button class="btn btn-ghost" style="flex:1;flex-direction:column;height:64px;gap:3px;font-size:11px" onclick="triggerGallery()">
+              <span style="font-size:20px">🖼️</span>Camera Roll
             </button>
           </div>
+          <div id="photoDropZone"
+            style="border:2px dashed var(--border2);border-radius:var(--rm);padding:16px;text-align:center;transition:all .2s;color:var(--muted);font-size:12px"
+            ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
+            ondragleave="this.style.borderColor='var(--border2)'"
+            ondrop="handlePhotoDrop(event)">
+            Or drag & drop an image here
+          </div>
+          <div id="pasteHint" style="display:none;background:var(--surface2);border:1px solid var(--blue-dim);border-radius:var(--rm);padding:10px;text-align:center;font-size:12px;color:var(--muted2);margin-top:8px">
+            📋 Press <strong>Cmd+V</strong> to paste a screenshot<br>
+            <span style="font-size:11px;color:var(--muted)">iPhone: use Camera Roll instead</span>
+          </div>
+          <div id="photoPreviewWrap" style="display:none;margin-top:10px">
+            <img id="photoPreviewImg" style="width:100%;border-radius:var(--rm);border:1px solid var(--border);max-height:240px;object-fit:contain">
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-ghost" style="flex:1" onclick="retryPhoto()">Change</button>
+              <button class="btn btn-blue" style="flex:1" id="photoProcessBtn" onclick="processPhoto()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:6px"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Read Schedule →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEXT TAB -->
+        <div id="importTabText" style="display:none">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Paste or type your schedule — any format works:</div>
+          <textarea id="scheduleTextInput" placeholder="Examples:
+Mon Mar 24: Max speech 3:30, Maddie bball 6pm
+Tue: Maddie soccer 4:30 Fieldhouse
+Vikings practice Tue/Thu 4:30-6pm Superdome
+Wed: Both kids enrichment until 4:15" 
+            style="width:100%;height:140px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rm);padding:12px;font-size:13px;color:var(--text);font-family:inherit;resize:none;box-sizing:border-box;line-height:1.5"
+            oninput="this.style.borderColor=this.value?'var(--blue-dim)':'var(--border2)'"></textarea>
+          <button class="btn btn-blue" style="width:100%;justify-content:center;margin-top:8px" onclick="processTextSchedule()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="margin-right:6px"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Parse Schedule →
+          </button>
         </div>
       </div>
 
@@ -1519,7 +1538,81 @@ function openPhotoImport(){
   document.getElementById('photoPreviewWrap').style.display='none';
   document.getElementById('photoDropZone').style.display='';
   document.getElementById('pasteHint').style.display='none';
+  document.getElementById('scheduleTextInput').value='';
+  switchImportTab('photo');
   openOv('photoOv');
+}
+
+function switchImportTab(tab){
+  const isPhoto=tab==='photo';
+  document.getElementById('importTabPhoto').style.display=isPhoto?'':'none';
+  document.getElementById('importTabText').style.display=isPhoto?'none':'';
+  document.getElementById('tabPhotoBtn').style.background=isPhoto?'var(--blue)':'transparent';
+  document.getElementById('tabPhotoBtn').style.color=isPhoto?'white':'var(--muted)';
+  document.getElementById('tabTextBtn').style.background=isPhoto?'transparent':'var(--blue)';
+  document.getElementById('tabTextBtn').style.color=isPhoto?'var(--muted)':'white';
+}
+
+async function processTextSchedule(){
+  const text=document.getElementById('scheduleTextInput').value.trim();
+  if(!text){toast('⚠️','Please enter some schedule text first');return;}
+  const apiKey=getApiKey();
+  if(!apiKey){promptForApiKey(()=>processTextSchedule());return;}
+
+  document.getElementById('photoStep1').style.display='none';
+  document.getElementById('photoStep2').style.display='';
+  document.getElementById('photoStep2').querySelector('div:nth-child(2)').textContent='Parsing your schedule…';
+
+  const todayStr=new Date().toISOString().split('T')[0];
+  const prompt=`You are a family calendar assistant. Parse this schedule text into individual calendar events.
+Today's date is ${todayStr}.
+Family members: Maddie (girl), Max (boy), Josh (dad), Jess (mom).
+
+Schedule text:
+"${text}"
+
+Return ONLY a valid JSON array (no markdown, no explanation) where each item has:
+{
+  "title": "descriptive event title",
+  "date": "YYYY-MM-DD",
+  "time": "H:MM AM/PM or empty string",
+  "timeEnd": "H:MM AM/PM end time if mentioned or empty string",
+  "type": "one of: soccer, basketball, baseball, enrichment, birthday, equip, speech, travel, dinner, conference, school-break, knicks, social, wcfc",
+  "who": "Maddie, Max, Josh, Jess, Both kids, Both adults, Everyone, or empty string",
+  "location": "location if mentioned or empty string",
+  "notes": "any extra details or empty string"
+}
+
+Rules:
+- Extract every distinct event — if something repeats (e.g. Tue/Thu) create one entry per day
+- Convert day names to actual YYYY-MM-DD dates based on today
+- Times like "330" or "3:30" mean 3:30 PM unless clearly AM; "6pm" = 6:00 PM
+- Infer who from names mentioned
+- Infer type from context
+- Return only the JSON array`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:2000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await resp.json();
+    const raw=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(raw);
+    photoEvts=parsed;
+    showPhotoPreview(parsed);
+  }catch(err){
+    console.error('Text parse error:',err);
+    document.getElementById('photoStep2').style.display='none';
+    document.getElementById('photoStep1').style.display='';
+    switchImportTab('text');
+    toast('⚠️','Could not parse — try rephrasing or check your API key');
+  }
 }
 
 function triggerCamera(){document.getElementById('photoInputCamera').click();}
@@ -1596,6 +1689,7 @@ function retryPhoto(){
   document.getElementById('photoDropZone').style.display='';
   document.getElementById('pasteHint').style.display='none';
   document.getElementById('photoPreviewWrap').style.display='none';
+  switchImportTab('photo');
   photoBase64=null;
 }
 
