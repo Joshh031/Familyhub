@@ -1,6 +1,10 @@
 {
   "rules": {
-    ".read": "auth != null && auth.uid === 'DGmCAedCrNNBBURG55rFQOWKKba2' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider !== 'anonymous'",
-    ".write": "auth != null && auth.uid === 'DGmCAedCrNNBBURG55rFQOWKKba2' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider !== 'anonymous'"
+    ".read": false,
+    ".write": false,
+    "$node": {
+      ".read": "$node !== 'journal' && $node !== 'battleplan' && auth != null && auth.uid === 'DGmCAedCrNNBBURG55rFQOWKKba2' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider !== 'anonymous'",
+      ".write": "$node !== 'journal' && $node !== 'battleplan' && auth != null && auth.uid === 'DGmCAedCrNNBBURG55rFQOWKKba2' && auth.token.email_verified === true && auth.token.firebase.sign_in_provider !== 'anonymous'"
+    }
   }
 }
